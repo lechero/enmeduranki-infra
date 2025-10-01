@@ -1,2 +1,3 @@
 bin
 proxy/acme.json
+templates/server/.env
