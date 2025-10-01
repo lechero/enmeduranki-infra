@@ -1,0 +1,7 @@
+api:
+  dashboard: false
+
+log:
+  level: INFO
+
+accessLog: {}

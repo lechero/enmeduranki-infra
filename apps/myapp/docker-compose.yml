@@ -1,0 +1,18 @@
+services:
+  whoami:
+    image: traefik/whoami
+    container_name: myapp-whoami
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.myapp.rule=Host(`enmeduranki.com`)"
+      - "traefik.http.routers.myapp.entrypoints=websecure"
+      - "traefik.http.routers.myapp.tls.certresolver=lehttp"
+      - "traefik.http.middlewares.myapp-headers.headers.stsSeconds=31536000"
+      - "traefik.http.routers.myapp.middlewares=myapp-headers@docker"
+    networks:
+      - proxy
+    restart: unless-stopped
+
+networks:
+  proxy:
+    external: true
