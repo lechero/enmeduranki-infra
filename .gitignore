@@ -3,3 +3,4 @@ proxy/acme.json
 templates/server/.env
 .env
 
+acme.json
