@@ -26,6 +26,8 @@ git config --global pull.rebase true
 
 sh -c "$(curl -fsLS get.chezmoi.io)"
 curl https://raw.githubusercontent.com/jesseduffield/lazydocker/master/scripts/install_update_linux.sh | bash
+ 
+sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d
 
 echo "[INFO] Installing Docker Engine via convenience script..."
 curl -fsSL https://get.docker.com | sh

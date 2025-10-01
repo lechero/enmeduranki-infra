@@ -1,0 +1,23 @@
+version: '3'
+
+tasks:
+  up:
+    desc: Start proxy and myapp services
+    cmds:
+      - docker compose -f proxy/docker-compose.yml up -d
+      - docker compose -f apps/myapp/docker-compose.yml up -d
+
+  set-domain:
+    desc: Set domain value and run config script
+    vars:
+      DOMAIN: PLACEHOLDER
+    cmds:
+      - bash set-config-domain.sh {{.DOMAIN}}
+  
+  down:
+    desc: Stop proxy and myapp services
+    cmds:
+      - docker compose -f apps/myapp/docker-compose.yml down
+      - docker compose -f proxy/docker-compose.yml down
+
+  
