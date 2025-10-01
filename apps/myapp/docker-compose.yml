@@ -6,9 +6,17 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.myapp.rule=Host(`enmeduranki.com`)"
       - "traefik.http.routers.myapp.entrypoints=websecure"
+      - "traefik.http.routers.myapp.service=myapp-svc"
+      - "traefik.http.routers.myapp.tls=true"
       - "traefik.http.routers.myapp.tls.certresolver=lehttp"
       - "traefik.http.middlewares.myapp-headers.headers.stsSeconds=31536000"
       - "traefik.http.routers.myapp.middlewares=myapp-headers@docker"
+      - "traefik.http.routers.myapp-http.service=myapp-svc"
+      - "traefik.http.routers.myapp-http.rule=Host(`enmeduranki.com`)"
+      - "traefik.http.routers.myapp-http.entrypoints=web"
+      - "traefik.http.routers.myapp-http.middlewares=myapp-https-redirect"
+      - "traefik.http.middlewares.myapp-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.services.myapp-svc.loadbalancer.server.port=80"
     networks:
       - proxy
     restart: unless-stopped
