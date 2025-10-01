@@ -1,0 +1,30 @@
+# Note: This file is overridden by command-line args in docker-compose.yml
+# Keep for reference but actual config comes from docker-compose.yml + .env
+
+api:
+  dashboard: false
+
+log:
+  level: DEBUG
+
+accessLog: {}
+
+entryPoints:
+  web:
+    address: ":80"
+  websecure:
+    address: ":443"
+
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+    network: proxy
+
+certificatesResolvers:
+  lehttp:
+    acme:
+      email: miguel@midgetgiraffe.com
+      storage: /letsencrypt/acme.json
+      httpChallenge:
+        entryPoint: web
