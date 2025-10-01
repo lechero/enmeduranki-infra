@@ -5,14 +5,16 @@ services:
     command:
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
-      - "--log.level=DEBUG"
+      - "--log.level=${TRAEFIK_LOG_LEVEL:-DEBUG}"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
       - "--certificatesresolvers.lehttp.acme.httpchallenge=true"
-      - "--certificatesresolvers.lehttp.acme.email=miguel@midgetgiraffe.com"
+      - "--certificatesresolvers.lehttp.acme.email=${ACME_EMAIL}"
       - "--certificatesresolvers.lehttp.acme.storage=/letsencrypt/acme.json"
       - "--certificatesresolvers.lehttp.acme.httpchallenge.entrypoint=web"
       - "--api.dashboard=false"
+    env_file:
+      - ../.env
     ports:
       - "80:80"
       - "443:443"
