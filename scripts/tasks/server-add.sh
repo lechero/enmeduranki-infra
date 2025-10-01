@@ -32,6 +32,10 @@ mkdir -p "$SERVER_DIR"
 
 echo "[INFO] Copying proxy configuration from templates/server/proxy..."
 cp -r "$REPO_ROOT/templates/server/proxy" "$SERVER_DIR/proxy"
+mv "$SERVER_DIR/proxy/acme.default" "$SERVER_DIR/proxy/acme.json"
+
+chmod 0600 "$SERVER_DIR/proxy/acme.json"
+
 
 echo "[INFO] Copying .env.default to server directory..."
 cp "$REPO_ROOT/templates/server/.env.default" "$SERVER_DIR/.env"
