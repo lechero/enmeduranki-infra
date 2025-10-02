@@ -1,0 +1,38 @@
+services:
+  registry:
+    image: registry:2
+    container_name: sippar-registry
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - "${REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY}:/var/lib/registry"
+    labels:
+      - "traefik.enable=true"
+
+      # HTTPS
+      - "traefik.http.routers.registry.rule=Host(`${REGISTRY_DOMAIN}`)"
+      - "traefik.http.routers.registry.entrypoints=websecure"
+      - "traefik.http.routers.registry.tls=true"
+      - "traefik.http.routers.registry.tls.certresolver=lehttp"
+      - "traefik.http.routers.registry.service=registry-svc"
+
+      # HTTP → HTTPS redirect
+      - "traefik.http.routers.registry-http.rule=Host(`${REGISTRY_DOMAIN}`)"
+      - "traefik.http.routers.registry-http.entrypoints=web"
+      - "traefik.http.routers.registry-http.middlewares=registry-https-redirect"
+      - "traefik.http.middlewares.registry-https-redirect.redirectscheme.scheme=https"
+
+      # Middleware: optional HSTS
+      - "traefik.http.middlewares.registry-headers.headers.stsSeconds=31536000"
+      - "traefik.http.routers.registry.middlewares=registry-headers@docker"
+
+      # Port mapping
+      - "traefik.http.services.registry-svc.loadbalancer.server.port=5000"
+
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true
