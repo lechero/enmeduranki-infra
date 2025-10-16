@@ -1,0 +1,28 @@
+services:
+  kingkontext:
+    image: traefik/whoami
+    container_name: enmeduranki-kingkontext
+    env_file:
+      - .env
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.middlewares.kingkontext-headers.headers.stsSeconds=31536000"
+      - "traefik.http.middlewares.kingkontext-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.kingkontext.entrypoints=websecure"
+      - "traefik.http.routers.kingkontext.middlewares=kingkontext-headers@docker"
+      - "traefik.http.routers.kingkontext.rule=Host(`kingkontext.com`)"
+      - "traefik.http.routers.kingkontext.service=kingkontext-svc"
+      - "traefik.http.routers.kingkontext.tls=true"
+      - "traefik.http.routers.kingkontext.tls.certresolver=lehttp"
+      - "traefik.http.routers.kingkontext-http.entrypoints=web"
+      - "traefik.http.routers.kingkontext-http.middlewares=kingkontext-https-redirect"
+      - "traefik.http.routers.kingkontext-http.rule=Host(`kingkontext.com`)"
+      - "traefik.http.routers.kingkontext-http.service=kingkontext-svc"
+      - "traefik.http.services.kingkontext-svc.loadbalancer.server.port=80"
+    networks:
+      - proxy
+    restart: unless-stopped
+
+networks:
+  proxy:
+    external: true
