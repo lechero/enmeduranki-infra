@@ -1,9 +1,9 @@
-# Server Deployment Instructions for kingkontext.com
+# Server Deployment Instructions for kingkontext.nl
 
 **Date:** 2025-11-15
 **Target Server:** enmeduranki
 **Deployment Location:** `/home/enki/curriculum-vitae`
-**Infrastructure Config:** `/srv/enmeduranki-infra/servers/enmeduranki/apps/kingkontext.com`
+**Infrastructure Config:** `/srv/enmeduranki-infra/servers/enmeduranki/apps/kingkontext.nl`
 **APP_CODE_PATH (.env):** `/home/enki/curriculum-vitae`
 
 ---
@@ -12,8 +12,8 @@
 
 This document contains step-by-step instructions for deploying the curriculum-vitae application stack to the enmeduranki server. The deployment includes:
 
-- **Web App** (Next.js 15) - `https://cv.kingkontext.com`
-- **CMS** (Strapi v5) - `https://cms.kingkontext.com`
+- **Web App** (Next.js 15) - `https://cv.kingkontext.nl`
+- **CMS** (Strapi v5) - `https://cms.kingkontext.nl`
 - **CV Generator Worker** - Background job processor
 - **PostgreSQL 16** - Database
 - **Apache Tika** - Document text extraction
@@ -54,13 +54,13 @@ docker network ls | grep proxy
 
 Ensure these DNS A records point to your server IP:
 
-- `cv.kingkontext.com` → server IP
-- `cms.kingkontext.com` → server IP
+- `cv.kingkontext.nl` → server IP
+- `cms.kingkontext.nl` → server IP
 
 Verify:
 ```bash
-dig cv.kingkontext.com +short
-dig cms.kingkontext.com +short
+dig cv.kingkontext.nl +short
+dig cms.kingkontext.nl +short
 ```
 
 Both should return your server's public IP address.
@@ -106,7 +106,7 @@ cat /tmp/kingkontext-secrets.txt
 
 ```bash
 # Navigate to deployment directory
-cd /srv/enmeduranki-infra/servers/enmeduranki/apps/kingkontext.com
+cd /srv/enmeduranki-infra/servers/enmeduranki/apps/kingkontext.nl
 
 # Copy example environment file
 cp .env.example .env
@@ -148,7 +148,7 @@ Save and close the file (Ctrl+X, then Y, then Enter).
 ### Step 4: Build Docker Images
 
 ```bash
-# Still in /srv/enmeduranki-infra/servers/enmeduranki/apps/kingkontext.com
+# Still in /srv/enmeduranki-infra/servers/enmeduranki/apps/kingkontext.nl
 docker compose build
 
 # This will take 5-10 minutes on first run
@@ -204,7 +204,7 @@ docker compose ps
 1. **Access Strapi admin panel:**
    ```bash
    # Open in browser:
-   https://cms.kingkontext.com/admin
+   https://cms.kingkontext.nl/admin
    ```
 
 2. **Create admin account** (first-time setup form):
@@ -224,7 +224,7 @@ docker compose ps
 2. **Create new token:**
    - Click **"Create new API Token"** button
    - **Name:** `Next.js Web App`
-   - **Description:** `API token for cv.kingkontext.com frontend`
+   - **Description:** `API token for cv.kingkontext.nl frontend`
    - **Token type:** `Full access`
    - **Duration:** `Unlimited`
    - Click **Save**
@@ -237,7 +237,7 @@ docker compose ps
 
 ```bash
 # Edit .env file
-cd /srv/enmeduranki-infra/servers/enmeduranki/apps/kingkontext.com
+cd /srv/enmeduranki-infra/servers/enmeduranki/apps/kingkontext.nl
 nano .env
 
 # Find the line:
@@ -287,7 +287,7 @@ docker compose logs -f web
 1. **Access web app:**
    ```bash
    # Open in browser:
-   https://cv.kingkontext.com
+   https://cv.kingkontext.nl
    ```
 
 2. **Create account:**
@@ -313,8 +313,8 @@ docker compose logs -f web
 
 Run through this checklist to ensure everything is working:
 
-- [ ] **Web app accessible:** `https://cv.kingkontext.com` loads without SSL errors
-- [ ] **CMS admin accessible:** `https://cms.kingkontext.com/admin` loads
+- [ ] **Web app accessible:** `https://cv.kingkontext.nl` loads without SSL errors
+- [ ] **CMS admin accessible:** `https://cms.kingkontext.nl/admin` loads
 - [ ] **SSL certificates issued:** Both domains show valid Let's Encrypt certificates
 - [ ] **User authentication works:** Can sign up and sign in
 - [ ] **Offers page loads:** `/offers` page accessible when logged in
@@ -355,7 +355,7 @@ Run through this checklist to ensure everything is working:
 
 ```bash
 # Navigate to deployment directory
-cd /srv/enmeduranki-infra/servers/enmeduranki/apps/kingkontext.com
+cd /srv/enmeduranki-infra/servers/enmeduranki/apps/kingkontext.nl
 
 # View all logs
 docker compose logs -f
@@ -422,7 +422,7 @@ cd /home/enki/curriculum-vitae
 git pull
 
 # Rebuild affected services
-cd /srv/enmeduranki-infra/servers/enmeduranki/apps/kingkontext.com
+cd /srv/enmeduranki-infra/servers/enmeduranki/apps/kingkontext.nl
 docker compose build
 
 # Restart with new images
@@ -438,7 +438,7 @@ docker compose logs -f
 
 ### Web App Returns 502 Bad Gateway
 
-**Symptoms:** Browser shows "502 Bad Gateway" when accessing `cv.kingkontext.com`
+**Symptoms:** Browser shows "502 Bad Gateway" when accessing `cv.kingkontext.nl`
 
 **Diagnosis:**
 ```bash
@@ -470,7 +470,7 @@ docker compose up -d web
 
 ### CMS Admin Panel Won't Load
 
-**Symptoms:** `cms.kingkontext.com/admin` shows error or loading spinner indefinitely
+**Symptoms:** `cms.kingkontext.nl/admin` shows error or loading spinner indefinitely
 
 **Diagnosis:**
 ```bash
@@ -555,8 +555,8 @@ cd /srv/proxy
 docker compose logs traefik | grep -i acme
 
 # Verify DNS resolves correctly
-dig cv.kingkontext.com +short
-dig cms.kingkontext.com +short
+dig cv.kingkontext.nl +short
+dig cms.kingkontext.nl +short
 ```
 
 **Common causes:**
@@ -572,7 +572,7 @@ cd /srv/proxy
 docker compose ps
 
 # Verify port 80 is accessible
-curl -I http://cv.kingkontext.com
+curl -I http://cv.kingkontext.nl
 
 # Check firewall rules
 sudo ufw status
@@ -695,7 +695,7 @@ sudo ufw status
 ### Manual Database Backup
 
 ```bash
-cd /srv/enmeduranki-infra/servers/enmeduranki/apps/kingkontext.com
+cd /srv/enmeduranki-infra/servers/enmeduranki/apps/kingkontext.nl
 
 # Create backup
 docker compose exec postgres pg_dump -U strapi strapi > /tmp/kingkontext-backup-$(date +%Y%m%d-%H%M%S).sql
@@ -728,7 +728,7 @@ set -euo pipefail
 
 BACKUP_DIR="/srv/backups/kingkontext"
 DATE=$(date +%Y%m%d-%H%M%S)
-COMPOSE_DIR="/srv/enmeduranki-infra/servers/enmeduranki/apps/kingkontext.com"
+COMPOSE_DIR="/srv/enmeduranki-infra/servers/enmeduranki/apps/kingkontext.nl"
 
 mkdir -p "$BACKUP_DIR"
 
@@ -783,16 +783,16 @@ tail /var/log/kingkontext-backup.log
 
 All services expose health check endpoints:
 
-- **Web:** `https://cv.kingkontext.com/api/health`
-- **CMS:** `https://cms.kingkontext.com/_health`
+- **Web:** `https://cv.kingkontext.nl/api/health`
+- **CMS:** `https://cms.kingkontext.nl/_health`
 
 Test them:
 
 ```bash
-curl https://cv.kingkontext.com/api/health
+curl https://cv.kingkontext.nl/api/health
 # Should return: {"status":"ok","timestamp":"...","uptime":...}
 
-curl https://cms.kingkontext.com/_health
+curl https://cms.kingkontext.nl/_health
 # Should return: {"status":"ok"}
 ```
 
@@ -802,8 +802,8 @@ Recommended: **UptimeRobot** (free tier)
 
 1. Sign up at https://uptimerobot.com
 2. Add monitors:
-   - **CV App:** `https://cv.kingkontext.com/api/health` (every 5 min)
-   - **CMS:** `https://cms.kingkontext.com/_health` (every 5 min)
+   - **CV App:** `https://cv.kingkontext.nl/api/health` (every 5 min)
+   - **CMS:** `https://cms.kingkontext.nl/_health` (every 5 min)
 3. Configure alerts (email, Slack, etc.)
 
 ### Log Aggregation
@@ -877,7 +877,7 @@ pool: {
 Rebuild CMS:
 
 ```bash
-cd /srv/enmeduranki-infra/servers/enmeduranki/apps/kingkontext.com
+cd /srv/enmeduranki-infra/servers/enmeduranki/apps/kingkontext.nl
 docker compose build cms
 docker compose up -d cms
 ```
@@ -938,7 +938,7 @@ If you need to completely restore the system:
 
 3. **Restore .env file:**
    ```bash
-   cd /srv/enmeduranki-infra/servers/enmeduranki/apps/kingkontext.com
+   cd /srv/enmeduranki-infra/servers/enmeduranki/apps/kingkontext.nl
    # Copy .env from backup (1Password, etc.)
    nano .env
    # Paste contents and save
@@ -961,7 +961,7 @@ If you need to completely restore the system:
    ```
 
 6. **Verify:**
-   - Access `https://cv.kingkontext.com`
+   - Access `https://cv.kingkontext.nl`
    - Log in with existing account
    - Verify offers are visible
    - Test CV generation
@@ -980,7 +980,7 @@ git log --oneline -10
 git checkout <previous-commit-hash>
 
 # Rebuild
-cd /srv/enmeduranki-infra/servers/enmeduranki/apps/kingkontext.com
+cd /srv/enmeduranki-infra/servers/enmeduranki/apps/kingkontext.nl
 docker compose build
 docker compose up -d
 ```
@@ -1028,7 +1028,7 @@ docker compose up -d
 
 - **Main README:** `/home/enki/curriculum-vitae/README.md`
 - **CLAUDE.md:** `/home/enki/curriculum-vitae/CLAUDE.md` (project architecture)
-- **Deployment README:** `/srv/enmeduranki-infra/servers/enmeduranki/apps/kingkontext.com/README.md`
+- **Deployment README:** `/srv/enmeduranki-infra/servers/enmeduranki/apps/kingkontext.nl/README.md`
 - **Production setup doc:** `/home/enki/curriculum-vitae/state/production-deployment-setup.md`
 
 ### External Documentation
@@ -1043,7 +1043,7 @@ docker compose up -d
 
 ```bash
 # Quick reference card
-cd /srv/enmeduranki-infra/servers/enmeduranki/apps/kingkontext.com
+cd /srv/enmeduranki-infra/servers/enmeduranki/apps/kingkontext.nl
 
 # Status check
 docker compose ps
@@ -1064,7 +1064,7 @@ docker compose exec postgres pg_dump -U strapi strapi > backup.sql
 cd /home/enki/curriculum-vitae && git pull
 
 # Apply updates
-cd /srv/enmeduranki-infra/servers/enmeduranki/apps/kingkontext.com
+cd /srv/enmeduranki-infra/servers/enmeduranki/apps/kingkontext.nl
 docker compose build && docker compose up -d
 ```
 
@@ -1076,7 +1076,7 @@ After successful deployment, complete these tasks:
 
 ### 1. Test Full Workflow
 
-- [ ] Create user account at `https://cv.kingkontext.com/sign-in`
+- [ ] Create user account at `https://cv.kingkontext.nl/sign-in`
 - [ ] Upload a test job offer (PDF or text)
 - [ ] Verify offer appears in "Recent offers" list
 - [ ] Monitor cv-gen worker logs: `docker compose logs -f cv-gen`
@@ -1095,8 +1095,8 @@ After successful deployment, complete these tasks:
 ### 3. Set Up Monitoring
 
 - [ ] Create UptimeRobot account (or similar)
-- [ ] Add monitor for `https://cv.kingkontext.com/api/health`
-- [ ] Add monitor for `https://cms.kingkontext.com/_health`
+- [ ] Add monitor for `https://cv.kingkontext.nl/api/health`
+- [ ] Add monitor for `https://cms.kingkontext.nl/_health`
 - [ ] Configure email/Slack alerts
 - [ ] Test alerts (pause monitor, verify notification)
 
@@ -1104,7 +1104,7 @@ After successful deployment, complete these tasks:
 
 - [ ] Document initial response times
   ```bash
-  curl -w "@curl-format.txt" -o /dev/null -s https://cv.kingkontext.com
+  curl -w "@curl-format.txt" -o /dev/null -s https://cv.kingkontext.nl
   ```
 - [ ] Record container resource usage: `docker stats`
 - [ ] Document disk usage: `df -h && docker system df`
@@ -1133,8 +1133,8 @@ After successful deployment, complete these tasks:
 Deployment is successful when:
 
 ✅ All services show "(healthy)" in `docker compose ps`
-✅ Web app accessible via `https://cv.kingkontext.com` with valid SSL
-✅ CMS admin accessible via `https://cms.kingkontext.com/admin` with valid SSL
+✅ Web app accessible via `https://cv.kingkontext.nl` with valid SSL
+✅ CMS admin accessible via `https://cms.kingkontext.nl/admin` with valid SSL
 ✅ User can sign up and sign in
 ✅ User can upload job offer
 ✅ CV generator processes offer within 30 seconds
@@ -1178,7 +1178,7 @@ If deployment fails at any step:
    ```bash
    cd /home/enki/curriculum-vitae
    git checkout <previous-working-commit>
-   cd /srv/enmeduranki-infra/servers/enmeduranki/apps/kingkontext.com
+   cd /srv/enmeduranki-infra/servers/enmeduranki/apps/kingkontext.nl
    docker compose build
    docker compose up -d
    ```
@@ -1188,8 +1188,8 @@ If deployment fails at any step:
 ## Changelog
 
 **2025-11-15** - Initial production deployment guide
-- Next.js 15 web app (`cv.kingkontext.com`)
-- Strapi v5 CMS (`cms.kingkontext.com`)
+- Next.js 15 web app (`cv.kingkontext.nl`)
+- Strapi v5 CMS (`cms.kingkontext.nl`)
 - CV generator worker with OpenAI integration
 - PostgreSQL 16 database
 - Apache Tika document extraction

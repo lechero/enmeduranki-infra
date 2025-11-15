@@ -2,7 +2,7 @@ services:
   # PostgreSQL Database
   postgres:
     image: postgres:16-alpine
-    container_name: kingkontext-postgres
+    container_name: kingkontext-nl-postgres
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-strapi}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -13,7 +13,7 @@ services:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-strapi}"]
       timeout: 5s
     networks:
-      - kingkontext-internal
+      - kingkontext-nl-internal
     restart: unless-stopped
     volumes:
       - postgres-data:/var/lib/postgresql/data
@@ -25,7 +25,7 @@ services:
         NODE_ENV: production
       context: ${APP_CODE_PATH}
       dockerfile: apps/cms/Dockerfile
-    container_name: kingkontext-cms
+    container_name: kingkontext-nl-cms
     depends_on:
       postgres:
         condition: service_healthy
@@ -47,8 +47,8 @@ services:
       NODE_ENV: production
       PORT: 1337
       STRAPI_ADMIN_CLIENT_PREVIEW_SECRET: ${STRAPI_ADMIN_CLIENT_PREVIEW_SECRET}
-      STRAPI_ADMIN_CLIENT_URL: ${STRAPI_ADMIN_CLIENT_URL:-https://cv.kingkontext.com}
-      STRAPI_URL: ${STRAPI_URL:-https://cms.kingkontext.com}
+      STRAPI_ADMIN_CLIENT_URL: ${STRAPI_ADMIN_CLIENT_URL:-https://cv.kingkontext.nl}
+      STRAPI_URL: ${STRAPI_URL:-https://cms.kingkontext.nl}
       TRANSFER_TOKEN_SALT: ${TRANSFER_TOKEN_SALT}
     healthcheck:
       interval: 30s
@@ -70,17 +70,17 @@ services:
       - "traefik.http.middlewares.cms-https-redirect.redirectscheme.scheme=https"
       - "traefik.http.routers.cms-http.entrypoints=web"
       - "traefik.http.routers.cms-http.middlewares=cms-https-redirect"
-      - "traefik.http.routers.cms-http.rule=Host(`cms.kingkontext.com`)"
+      - "traefik.http.routers.cms-http.rule=Host(`cms.kingkontext.nl`)"
       - "traefik.http.routers.cms-http.service=cms-svc"
       - "traefik.http.routers.cms.entrypoints=websecure"
       - "traefik.http.routers.cms.middlewares=cms-headers@docker"
-      - "traefik.http.routers.cms.rule=Host(`cms.kingkontext.com`)"
+      - "traefik.http.routers.cms.rule=Host(`cms.kingkontext.nl`)"
       - "traefik.http.routers.cms.service=cms-svc"
       - "traefik.http.routers.cms.tls.certresolver=lehttp"
       - "traefik.http.routers.cms.tls=true"
       - "traefik.http.services.cms-svc.loadbalancer.server.port=1337"
     networks:
-      - kingkontext-internal
+      - kingkontext-nl-internal
       - proxy
     restart: unless-stopped
     volumes:
@@ -91,7 +91,7 @@ services:
     build:
       context: ${APP_CODE_PATH}
       dockerfile: packages/cv-gen/Dockerfile
-    container_name: kingkontext-cv-gen
+    container_name: kingkontext-nl-cv-gen
     depends_on:
       cms:
         condition: service_healthy
@@ -113,7 +113,7 @@ services:
       STRAPI_BASE_URL: http://cms:1337
       TIKA_URL: http://tika:9998
     networks:
-      - kingkontext-internal
+      - kingkontext-nl-internal
     restart: unless-stopped
     volumes:
       - ${APP_CODE_PATH}/markdown:/opt/app/markdown:ro
@@ -121,9 +121,9 @@ services:
   # Apache Tika (document text extraction)
   tika:
     image: apache/tika:latest-full
-    container_name: kingkontext-tika
+    container_name: kingkontext-nl-tika
     networks:
-      - kingkontext-internal
+      - kingkontext-nl-internal
     restart: unless-stopped
 
   # Next.js Web Application
@@ -131,7 +131,7 @@ services:
     build:
       context: ${APP_CODE_PATH}
       dockerfile: apps/web/Dockerfile
-    container_name: kingkontext-web
+    container_name: kingkontext-nl-web
     depends_on:
       cms:
         condition: service_healthy
@@ -140,11 +140,11 @@ services:
     environment:
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
       N8N_OFFER_WEBHOOK_URL: ${N8N_OFFER_WEBHOOK_URL}
-      NEXT_PUBLIC_STRAPI_URL: ${NEXT_PUBLIC_STRAPI_URL:-https://cms.kingkontext.com}
-      NEXT_PUBLIC_URL: ${NEXT_PUBLIC_URL:-https://cv.kingkontext.com}
+      NEXT_PUBLIC_STRAPI_URL: ${NEXT_PUBLIC_STRAPI_URL:-https://cms.kingkontext.nl}
+      NEXT_PUBLIC_URL: ${NEXT_PUBLIC_URL:-https://cv.kingkontext.nl}
       NODE_ENV: production
       STRAPI_API_TOKEN: ${STRAPI_API_TOKEN}
-      STRAPI_URL: ${STRAPI_URL:-https://cms.kingkontext.com}
+      STRAPI_URL: ${STRAPI_URL:-https://cms.kingkontext.nl}
     healthcheck:
       interval: 30s
       retries: 3
@@ -165,24 +165,24 @@ services:
       - "traefik.http.middlewares.web-https-redirect.redirectscheme.scheme=https"
       - "traefik.http.routers.web-http.entrypoints=web"
       - "traefik.http.routers.web-http.middlewares=web-https-redirect"
-      - "traefik.http.routers.web-http.rule=Host(`cv.kingkontext.com`)"
+      - "traefik.http.routers.web-http.rule=Host(`cv.kingkontext.nl`)"
       - "traefik.http.routers.web-http.service=web-svc"
       - "traefik.http.routers.web.entrypoints=websecure"
       - "traefik.http.routers.web.middlewares=web-headers@docker"
-      - "traefik.http.routers.web.rule=Host(`cv.kingkontext.com`)"
+      - "traefik.http.routers.web.rule=Host(`cv.kingkontext.nl`)"
       - "traefik.http.routers.web.service=web-svc"
       - "traefik.http.routers.web.tls.certresolver=lehttp"
       - "traefik.http.routers.web.tls=true"
       - "traefik.http.services.web-svc.loadbalancer.server.port=3000"
     networks:
-      - kingkontext-internal
+      - kingkontext-nl-internal
       - proxy
     restart: unless-stopped
     volumes:
       - web-cache:/app/.next/cache
 
 networks:
-  kingkontext-internal:
+  kingkontext-nl-internal:
     driver: bridge
   proxy:
     external: true
