@@ -1,28 +1,178 @@
 services:
-  kingkontext:
-    image: traefik/whoami
-    container_name: enmeduranki-kingkontext
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: kingkontext-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-strapi}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER:-strapi}
+    healthcheck:
+      interval: 10s
+      retries: 5
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-strapi}"]
+      timeout: 5s
+    networks:
+      - kingkontext-internal
+    restart: unless-stopped
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  # Strapi CMS (headless CMS backend)
+  cms:
+    build:
+      args:
+        NODE_ENV: production
+      context: /srv/apps/curriculum-vitae
+      dockerfile: apps/cms/Dockerfile
+    container_name: kingkontext-cms
+    depends_on:
+      postgres:
+        condition: service_healthy
     env_file:
       - .env
+    environment:
+      ADMIN_JWT_SECRET: ${ADMIN_JWT_SECRET}
+      API_TOKEN_SALT: ${API_TOKEN_SALT}
+      APP_KEYS: ${APP_KEYS}
+      DATABASE_CLIENT: postgres
+      DATABASE_HOST: postgres
+      DATABASE_NAME: ${POSTGRES_DB:-strapi}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+      DATABASE_PORT: 5432
+      DATABASE_SSL: false
+      DATABASE_USERNAME: ${POSTGRES_USER:-strapi}
+      HOST: 0.0.0.0
+      JWT_SECRET: ${JWT_SECRET}
+      NODE_ENV: production
+      PORT: 1337
+      STRAPI_ADMIN_CLIENT_PREVIEW_SECRET: ${STRAPI_ADMIN_CLIENT_PREVIEW_SECRET}
+      STRAPI_ADMIN_CLIENT_URL: ${STRAPI_ADMIN_CLIENT_URL:-https://cv.kingkontext.com}
+      STRAPI_URL: ${STRAPI_URL:-https://cms.kingkontext.com}
+      TRANSFER_TOKEN_SALT: ${TRANSFER_TOKEN_SALT}
+    healthcheck:
+      interval: 30s
+      retries: 3
+      start_period: 60s
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:1337/_health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      timeout: 10s
     labels:
       - "traefik.enable=true"
-      - "traefik.http.middlewares.kingkontext-headers.headers.stsSeconds=31536000"
-      - "traefik.http.middlewares.kingkontext-https-redirect.redirectscheme.scheme=https"
-      - "traefik.http.routers.kingkontext.entrypoints=websecure"
-      - "traefik.http.routers.kingkontext.middlewares=kingkontext-headers@docker"
-      - "traefik.http.routers.kingkontext.rule=Host(`kingkontext.com`)"
-      - "traefik.http.routers.kingkontext.service=kingkontext-svc"
-      - "traefik.http.routers.kingkontext.tls=true"
-      - "traefik.http.routers.kingkontext.tls.certresolver=lehttp"
-      - "traefik.http.routers.kingkontext-http.entrypoints=web"
-      - "traefik.http.routers.kingkontext-http.middlewares=kingkontext-https-redirect"
-      - "traefik.http.routers.kingkontext-http.rule=Host(`kingkontext.com`)"
-      - "traefik.http.routers.kingkontext-http.service=kingkontext-svc"
-      - "traefik.http.services.kingkontext-svc.loadbalancer.server.port=80"
+      - "traefik.http.middlewares.cms-headers.headers.stsSeconds=31536000"
+      - "traefik.http.middlewares.cms-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.cms-http.entrypoints=web"
+      - "traefik.http.routers.cms-http.middlewares=cms-https-redirect"
+      - "traefik.http.routers.cms-http.rule=Host(`cms.kingkontext.com`)"
+      - "traefik.http.routers.cms-http.service=cms-svc"
+      - "traefik.http.routers.cms.entrypoints=websecure"
+      - "traefik.http.routers.cms.middlewares=cms-headers@docker"
+      - "traefik.http.routers.cms.rule=Host(`cms.kingkontext.com`)"
+      - "traefik.http.routers.cms.service=cms-svc"
+      - "traefik.http.routers.cms.tls.certresolver=lehttp"
+      - "traefik.http.routers.cms.tls=true"
+      - "traefik.http.services.cms-svc.loadbalancer.server.port=1337"
     networks:
+      - kingkontext-internal
       - proxy
     restart: unless-stopped
+    volumes:
+      - cms-uploads:/opt/app/apps/cms/public/uploads
+
+  # CV Generator Worker (background job processor)
+  cv-gen:
+    build:
+      context: /srv/apps/curriculum-vitae
+      dockerfile: packages/cv-gen/Dockerfile
+    container_name: kingkontext-cv-gen
+    depends_on:
+      cms:
+        condition: service_healthy
+      tika:
+        condition: service_started
+    env_file:
+      - .env
+    environment:
+      ASSIGNMENTS_DIR: /assignments
+      CV_GEN_WORKER_ID: ${CV_GEN_WORKER_ID:-kingkontext-worker-01}
+      LLM_PROVIDER: ${LLM_PROVIDER:-openai}
+      NODE_ENV: production
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4-turbo-preview}
+      POLLING_INTERVAL_MS: ${POLLING_INTERVAL_MS:-15000}
+      STRAPI_API_TOKEN: ${STRAPI_API_TOKEN}
+      STRAPI_BASE_URL: http://cms:1337
+      TIKA_URL: http://tika:9998
+    networks:
+      - kingkontext-internal
+    restart: unless-stopped
+    volumes:
+      - /srv/apps/curriculum-vitae/markdown/assignments:/assignments:ro
+
+  # Apache Tika (document text extraction)
+  tika:
+    image: apache/tika:latest-full
+    container_name: kingkontext-tika
+    networks:
+      - kingkontext-internal
+    restart: unless-stopped
+
+  # Next.js Web Application
+  web:
+    build:
+      context: /srv/curriculum-vitae
+      dockerfile: apps/web/Dockerfile
+    container_name: kingkontext-web
+    depends_on:
+      cms:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      N8N_OFFER_WEBHOOK_URL: ${N8N_OFFER_WEBHOOK_URL}
+      NEXT_PUBLIC_STRAPI_URL: ${NEXT_PUBLIC_STRAPI_URL:-https://cms.kingkontext.com}
+      NEXT_PUBLIC_URL: ${NEXT_PUBLIC_URL:-https://cv.kingkontext.com}
+      NODE_ENV: production
+      STRAPI_API_TOKEN: ${STRAPI_API_TOKEN}
+      STRAPI_URL: ${STRAPI_URL:-https://cms.kingkontext.com}
+    healthcheck:
+      interval: 30s
+      retries: 3
+      start_period: 40s
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      timeout: 10s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.middlewares.web-headers.headers.stsSeconds=31536000"
+      - "traefik.http.middlewares.web-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.web-http.entrypoints=web"
+      - "traefik.http.routers.web-http.middlewares=web-https-redirect"
+      - "traefik.http.routers.web-http.rule=Host(`cv.kingkontext.com`)"
+      - "traefik.http.routers.web-http.service=web-svc"
+      - "traefik.http.routers.web.entrypoints=websecure"
+      - "traefik.http.routers.web.middlewares=web-headers@docker"
+      - "traefik.http.routers.web.rule=Host(`cv.kingkontext.com`)"
+      - "traefik.http.routers.web.service=web-svc"
+      - "traefik.http.routers.web.tls.certresolver=lehttp"
+      - "traefik.http.routers.web.tls=true"
+      - "traefik.http.services.web-svc.loadbalancer.server.port=3000"
+    networks:
+      - kingkontext-internal
+      - proxy
+    restart: unless-stopped
+    volumes:
+      - web-cache:/app/.next/cache
 
 networks:
+  kingkontext-internal:
+    driver: bridge
   proxy:
     external: true
+
+volumes:
+  cms-uploads:
+    driver: local
+  postgres-data:
+    driver: local
+  web-cache:
+    driver: local
