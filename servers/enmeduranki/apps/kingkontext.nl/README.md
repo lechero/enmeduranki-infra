@@ -1,4 +1,4 @@
-# kingkontext.com Production Deployment
+# kingkontext.nl Production Deployment
 
 Complete CV management system with Next.js frontend, Strapi CMS, CV generator worker, and PostgreSQL database.
 
@@ -10,8 +10,8 @@ Complete CV management system with Next.js frontend, Strapi CMS, CV generator wo
 Internet
    ↓
 Traefik (proxy network)
-   ├── cv.kingkontext.com → Next.js Web App (port 3000)
-   └── cms.kingkontext.com → Strapi CMS (port 1337)
+   ├── cv.kingkontext.nl → Next.js Web App (port 3000)
+   └── cms.kingkontext.nl → Strapi CMS (port 1337)
        ↓
 PostgreSQL (internal network)
        ↑
@@ -29,7 +29,7 @@ Apache Tika (document text extraction)
 
 **Networks:**
 - `proxy` (external) - Traefik reverse proxy network with SSL
-- `kingkontext-internal` (bridge) - Internal service communication
+- `kingkontext-nl-internal` (bridge) - Internal service communication
 
 ---
 
@@ -38,7 +38,7 @@ Apache Tika (document text extraction)
 1. **Server Access**: SSH to `enmeduranki` server
 2. **Repository**: Clone curriculum-vitae to `/home/enki/curriculum-vitae` (default `APP_CODE_PATH`; adjust `.env` if you keep it elsewhere)
 3. **Traefik**: Proxy must be running on external `proxy` network
-4. **DNS**: Point `kingkontext.com` and `cms.kingkontext.com` to server IP
+4. **DNS**: Point `kingkontext.nl` and `cms.kingkontext.nl` to server IP
 
 Set `APP_CODE_PATH` in `.env` (default `/home/enki/curriculum-vitae`) to the location of the cloned repository before running the commands below.
 
@@ -68,7 +68,7 @@ cat /tmp/secrets.txt
 ### 3. Configure Environment
 
 ```bash
-cd /srv/enmeduranki-infra/servers/enmeduranki/apps/kingkontext.com
+cd /srv/enmeduranki-infra/servers/enmeduranki/apps/kingkontext.nl
 cp .env.example .env
 nano .env
 ```
@@ -96,7 +96,7 @@ Wait for all services to become healthy (~2 minutes).
 
 ### 5. Create Strapi Admin & API Token
 
-1. **Access Strapi admin**: https://cms.kingkontext.com/admin
+1. **Access Strapi admin**: https://cms.kingkontext.nl/admin
 2. **Create admin account** (first-time setup)
 3. **Generate API token**:
    - Go to Settings → API Tokens
@@ -125,7 +125,7 @@ Wait for all services to become healthy (~2 minutes).
 
 ### 7. Create First User
 
-1. Access: https://cv.kingkontext.com/sign-in
+1. Access: https://cv.kingkontext.nl/sign-in
 2. Create account (uses Strapi authentication)
 3. Verify you can access /offers page
 
@@ -133,8 +133,8 @@ Wait for all services to become healthy (~2 minutes).
 
 ## Verification Checklist
 
-- [ ] Web app accessible at https://cv.kingkontext.com
-- [ ] CMS admin accessible at https://cms.kingkontext.com/admin
+- [ ] Web app accessible at https://cv.kingkontext.nl
+- [ ] CMS admin accessible at https://cms.kingkontext.nl/admin
 - [ ] SSL certificates automatically issued by Traefik/Let's Encrypt
 - [ ] Can sign in to web app
 - [ ] Can access /offers page
@@ -188,7 +188,7 @@ cd /home/enki/curriculum-vitae
 git pull
 
 # Rebuild and restart affected services
-cd /srv/enmeduranki-infra/servers/enmeduranki/apps/kingkontext.com
+cd /srv/enmeduranki-infra/servers/enmeduranki/apps/kingkontext.nl
 docker compose build
 docker compose up -d
 ```
@@ -286,8 +286,8 @@ docker compose logs traefik
 
 **Verify DNS:**
 ```bash
-dig kingkontext.com
-dig cms.kingkontext.com
+dig kingkontext.nl
+dig cms.kingkontext.nl
 ```
 
 Both should point to your server IP.
@@ -360,7 +360,7 @@ DATE=$(date +%Y%m%d-%H%M%S)
 
 mkdir -p "$BACKUP_DIR"
 
-cd /srv/enmeduranki-infra/servers/enmeduranki/apps/kingkontext.com
+cd /srv/enmeduranki-infra/servers/enmeduranki/apps/kingkontext.nl
 
 # Backup database
 docker compose exec -T postgres pg_dump -U strapi strapi > "$BACKUP_DIR/db-$DATE.sql"
@@ -394,7 +394,7 @@ crontab -e
 
 2. **Restore .env:**
    ```bash
-   cd /srv/enmeduranki-infra/servers/enmeduranki/apps/kingkontext.com
+   cd /srv/enmeduranki-infra/servers/enmeduranki/apps/kingkontext.nl
    # Copy .env from backup
    ```
 
@@ -409,7 +409,7 @@ crontab -e
    ```
 
 5. **Verify:**
-   - Access https://cv.kingkontext.com
+   - Access https://cv.kingkontext.nl
    - Check /offers page
    - Verify data integrity
 
