@@ -111,7 +111,7 @@ services:
       POLLING_INTERVAL_MS: ${POLLING_INTERVAL_MS:-15000}
       STRAPI_API_TOKEN: ${STRAPI_API_TOKEN}
       STRAPI_BASE_URL: http://cms:1337
-      TIKA_URL: http://tika:9998
+      TIKA_URL: http://tika:9998/tika
     networks:
       - kingkontext-nl-internal
     restart: unless-stopped
