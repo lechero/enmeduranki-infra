@@ -20,6 +20,7 @@ services:
 
   # Strapi CMS (headless CMS backend)
   cms:
+    image: kingkontext-nl-cms:latest
     build:
       args:
         NODE_ENV: production
@@ -88,6 +89,7 @@ services:
 
   # CV Generator Worker (background job processor)
   cv-gen:
+    image: kingkontext-nl-cv-gen:latest
     build:
       context: ${APP_CODE_PATH}
       dockerfile: packages/cv-gen/Dockerfile
@@ -128,6 +130,7 @@ services:
 
   # Next.js Web Application
   web:
+    image: kingkontext-nl-web:latest
     build:
       context: ${APP_CODE_PATH}
       dockerfile: apps/web/Dockerfile

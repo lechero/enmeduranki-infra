@@ -30,4 +30,71 @@ tasks:
       - docker compose -f apps/myapp/docker-compose.yml down
       - docker compose -f proxy/docker-compose.yml down
 
+  github-runner:install:
+    desc: Install GitHub Actions self-hosted runner
+    summary: |
+      Install and configure GitHub Actions runner as a systemd service.
+
+      Prerequisites:
+        - Get runner token from GitHub: Settings → Actions → Runners → New runner
+
+      Usage:
+        task github-runner:install REPO_URL=https://github.com/username/repo TOKEN=ghp_...
+
+      Example:
+        task github-runner:install REPO_URL=https://github.com/fuentastic/curriculum-vitae TOKEN=ghp_abc123...
+    vars:
+      REPO_URL: '{{.REPO_URL | default ""}}'
+      TOKEN: '{{.TOKEN | default ""}}'
+    cmds:
+      - |
+        if [ -z "{{.REPO_URL}}" ] || [ -z "{{.TOKEN}}" ]; then
+          echo "Error: Missing required variables"
+          echo ""
+          echo "Usage:"
+          echo "  task github-runner:install REPO_URL=https://github.com/username/repo TOKEN=ghp_..."
+          echo ""
+          echo "Get runner token from:"
+          echo "  GitHub → Repository → Settings → Actions → Runners → New self-hosted runner"
+          exit 1
+        fi
+      - bash scripts/install/install-github-runner.sh "{{.REPO_URL}}" "{{.TOKEN}}"
+
+  github-runner:status:
+    desc: Check GitHub Actions runner status
+    cmds:
+      - sudo systemctl status actions.runner.* || echo "No runner service found"
+
+  github-runner:logs:
+    desc: View GitHub Actions runner logs
+    cmds:
+      - journalctl -u actions.runner.* -f
+
+  github-runner:restart:
+    desc: Restart GitHub Actions runner service
+    cmds:
+      - sudo systemctl restart actions.runner.*
+
+  github-runner:stop:
+    desc: Stop GitHub Actions runner service
+    cmds:
+      - |
+        cd ~/actions-runner 2>/dev/null && sudo ./svc.sh stop || echo "Error: Runner not found at ~/actions-runner"
+
+  github-runner:uninstall:
+    desc: Uninstall GitHub Actions runner service
+    prompt: This will remove the GitHub Actions runner. Continue?
+    cmds:
+      - |
+        if [ -d ~/actions-runner ]; then
+          cd ~/actions-runner
+          sudo ./svc.sh stop || true
+          sudo ./svc.sh uninstall || true
+          cd ~
+          rm -rf ~/actions-runner
+          echo "GitHub Actions runner uninstalled"
+        else
+          echo "No runner found at ~/actions-runner"
+        fi
+
 
