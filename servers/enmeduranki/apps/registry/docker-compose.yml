@@ -5,8 +5,15 @@ services:
     restart: unless-stopped
     env_file:
       - .env
+    environment:
+      REGISTRY_HTTP_SECRET: ${REGISTRY_HTTP_SECRET}
+      REGISTRY_STORAGE_DELETE_ENABLED: ${REGISTRY_STORAGE_DELETE_ENABLED:-false}
+      REGISTRY_AUTH: htpasswd
+      REGISTRY_AUTH_HTPASSWD_REALM: "Registry Realm"
+      REGISTRY_AUTH_HTPASSWD_PATH: /auth/htpasswd
     volumes:
       - "${REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY}:/var/lib/registry"
+      - "${REGISTRY_AUTH_FILE_DIRECTORY:-/var/lib/registry/auth}:/auth:ro"
     labels:
       - "traefik.enable=true"
 
@@ -25,7 +32,8 @@ services:
 
       # Middleware: optional HSTS
       - "traefik.http.middlewares.registry-headers.headers.stsSeconds=31536000"
-      - "traefik.http.routers.registry.middlewares=registry-headers@docker"
+      - "traefik.http.middlewares.registry-auth.basicauth.usersfile=/auth/htpasswd"
+      - "traefik.http.routers.registry.middlewares=registry-headers@docker,registry-auth@docker"
 
       # Port mapping
       - "traefik.http.services.registry-svc.loadbalancer.server.port=5000"
