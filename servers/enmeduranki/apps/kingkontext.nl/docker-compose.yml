@@ -136,7 +136,7 @@ services:
       TOP_N_ASSIGNMENTS: ${TOP_N_ASSIGNMENTS:-3}
       MAX_CV_WORDS: ${MAX_CV_WORDS:-500}
       POLL_INTERVAL_MS: ${POLLING_INTERVAL_MS:-15000}
-      LOG_LEVEL: ${LOG_LEVEL:-info}
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
       STRAPI_API_TOKEN: ${STRAPI_API_TOKEN}
       STRAPI_BASE_URL: http://cms:1337
       TIKA_URL: http://tika:9998/tika
