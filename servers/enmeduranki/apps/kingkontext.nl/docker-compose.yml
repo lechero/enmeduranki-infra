@@ -129,6 +129,30 @@ services:
       - kingkontext-nl-internal
     restart: unless-stopped
 
+  # PDF Export Worker (PDF generation service)
+  pdf-export:
+    image: kingkontext-nl-pdf-export:${PDF_EXPORT_IMAGE_TAG:-latest}
+    build:
+      context: ${APP_CODE_PATH}
+      dockerfile: packages/pdf-export/Dockerfile
+    container_name: kingkontext-nl-pdf-export
+    depends_on:
+      cms:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      STRAPI_API_TOKEN: ${STRAPI_API_TOKEN}
+      STRAPI_URL: http://cms:1337
+      NEXT_PUBLIC_STRAPI_URL: http://cms:1337
+      POLL_INTERVAL_MS: ${PDF_EXPORT_POLL_INTERVAL_MS:-5000}
+      ALLOW_PARALLEL: ${PDF_EXPORT_ALLOW_PARALLEL:-false}
+      DEBUG: ${PDF_EXPORT_DEBUG:-}
+    networks:
+      - kingkontext-nl-internal
+    restart: unless-stopped
+
   # Next.js Web Application
   web:
     image: kingkontext-nl-web:latest
