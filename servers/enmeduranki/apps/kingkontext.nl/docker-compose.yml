@@ -21,11 +21,11 @@ services:
   # Strapi CMS (headless CMS backend)
   cms:
     image: ${REGISTRY_BASE_URL}kingkontext-nl-cms:latest
-    build:
-      args:
-        NODE_ENV: production
-      context: ${APP_CODE_PATH}
-      dockerfile: apps/cms/Dockerfile
+    # build:
+    #   args:
+    #     NODE_ENV: production
+    #   context: ${APP_CODE_PATH}
+    #   dockerfile: apps/cms/Dockerfile
     container_name: kingkontext-nl-cms
     depends_on:
       postgres:
@@ -90,9 +90,9 @@ services:
   # CV Generator Worker (background job processor)
   cv-gen:
     image: ${REGISTRY_BASE_URL}kingkontext-nl-cv-gen:latest
-    build:
-      context: ${APP_CODE_PATH}
-      dockerfile: packages/cv-gen/Dockerfile
+    # build:
+    #   context: ${APP_CODE_PATH}
+    #   dockerfile: packages/cv-gen/Dockerfile
     container_name: kingkontext-nl-cv-gen
     depends_on:
       cms:
@@ -132,9 +132,9 @@ services:
   # PDF Export Worker (PDF generation service)
   pdf-export:
     image: ${REGISTRY_BASE_URL}kingkontext-nl-pdf-export:${PDF_EXPORT_IMAGE_TAG:-latest}
-    build:
-      context: ${APP_CODE_PATH}
-      dockerfile: packages/pdf-export/Dockerfile
+    # build:
+    #   context: ${APP_CODE_PATH}
+    #   dockerfile: packages/pdf-export/Dockerfile
     container_name: kingkontext-nl-pdf-export
     depends_on:
       cms:
@@ -156,9 +156,9 @@ services:
   # Next.js Web Application
   web:
     image: ${REGISTRY_BASE_URL}kingkontext-nl-web:latest
-    build:
-      context: ${APP_CODE_PATH}
-      dockerfile: apps/web/Dockerfile
+    # build:
+    #   context: ${APP_CODE_PATH}
+    #   dockerfile: apps/web/Dockerfile
     container_name: kingkontext-nl-web
     depends_on:
       cms:
