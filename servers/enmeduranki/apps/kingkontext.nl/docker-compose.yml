@@ -121,6 +121,42 @@ services:
     volumes:
       - ${APP_CODE_PATH}/markdown:/opt/app/markdown:ro
 
+  # Offer Processor Worker (enriches offers and writes CV records)
+  offer-processor:
+    image: ${REGISTRY_BASE_URL}kingkontext-nl-offer-processor:${OFFER_PROCESSOR_IMAGE_TAG:-latest}
+    # build:
+    #   context: ${APP_CODE_PATH}
+    #   dockerfile: packages/offer-processor/Dockerfile
+    container_name: kingkontext-nl-offer-processor
+    depends_on:
+      cms:
+        condition: service_healthy
+      tika:
+        condition: service_started
+    env_file:
+      - .env
+    environment:
+      ASSIGNMENTS_DIR: /opt/app/markdown/assignments
+      PROFILE_PATH: /opt/app/markdown/profile.md
+      SKILLS_PATH: /opt/app/markdown/skills.md
+      OFFER_PROCESSOR_WORKER_ID: ${OFFER_PROCESSOR_WORKER_ID:-kingkontext-offer-processor-01}
+      PROVIDER: ${PROVIDER:-openai}
+      NODE_ENV: production
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-5.1}
+      TOP_N_ASSIGNMENTS: ${TOP_N_ASSIGNMENTS:-3}
+      MAX_CV_WORDS: ${MAX_CV_WORDS:-500}
+      POLL_INTERVAL_MS: ${POLLING_INTERVAL_MS:-15000}
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      STRAPI_API_TOKEN: ${STRAPI_API_TOKEN}
+      STRAPI_BASE_URL: http://cms:1337
+      TIKA_URL: http://tika:9998/tika
+    networks:
+      - kingkontext-nl-internal
+    restart: unless-stopped
+    volumes:
+      - ${APP_CODE_PATH}/markdown:/opt/app/markdown:ro
+
   # Apache Tika (document text extraction)
   tika:
     image: apache/tika:latest-full
