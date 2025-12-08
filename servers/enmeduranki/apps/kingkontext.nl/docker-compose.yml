@@ -189,6 +189,79 @@ services:
       - kingkontext-nl-internal
     restart: unless-stopped
 
+  # Offer Finder Worker (crawls external providers for job offers)
+  offer-finder:
+    image: ${REGISTRY_BASE_URL}kingkontext-nl-offer-finder:${OFFER_FINDER_IMAGE_TAG:-latest}
+    # build:
+    #   context: ${APP_CODE_PATH}
+    #   dockerfile: packages/offer-finder/Dockerfile
+    container_name: kingkontext-nl-offer-finder
+    depends_on:
+      cms:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      STRAPI_API_TOKEN: ${STRAPI_API_TOKEN}
+      STRAPI_URL: http://cms:1337
+      MODE: ${OFFER_FINDER_MODE:-daemon}
+      POLL_INTERVAL_MS: ${OFFER_FINDER_POLL_INTERVAL_MS:-300000}
+      PROCESS_SEARCHES: ${OFFER_FINDER_PROCESS_SEARCHES:-true}
+      SEARCH_POLL_INTERVAL_MS: ${OFFER_FINDER_SEARCH_POLL_INTERVAL_MS:-30000}
+      KEYWORDS: ${OFFER_FINDER_KEYWORDS:-}
+      LOCATIONS: ${OFFER_FINDER_LOCATIONS:-}
+      REMOTE_ONLY: ${OFFER_FINDER_REMOTE_ONLY:-false}
+      SINK: ${OFFER_FINDER_SINK:-strapi}
+      OUTPUT_DIR: ${OFFER_FINDER_OUTPUT_DIR:-/tmp/offers}
+      HTTP_TIMEOUT_MS: ${OFFER_FINDER_HTTP_TIMEOUT_MS:-30000}
+      HTTP_RETRY_LIMIT: ${OFFER_FINDER_HTTP_RETRY_LIMIT:-3}
+      HTTP_RETRY_DELAY_MS: ${OFFER_FINDER_HTTP_RETRY_DELAY_MS:-1000}
+      HTTP_THROTTLE_MS: ${OFFER_FINDER_HTTP_THROTTLE_MS:-1000}
+      HTTP_USER_AGENT: ${OFFER_FINDER_HTTP_USER_AGENT:-OfferFinder/1.0}
+      HEADFIRST_ENABLED: ${OFFER_FINDER_HEADFIRST_ENABLED:-true}
+      HEADFIRST_BASE_URL: ${OFFER_FINDER_HEADFIRST_BASE_URL:-https://headfirst.nl}
+      HEADFIRST_MAX_PAGES: ${OFFER_FINDER_HEADFIRST_MAX_PAGES:-5}
+      HEADFIRST_DELAY_MS: ${OFFER_FINDER_HEADFIRST_DELAY_MS:-2000}
+      HEADFIRST_INCLUDE_SIMILAR: ${OFFER_FINDER_HEADFIRST_INCLUDE_SIMILAR:-false}
+      HEADFIRST_MODE: ${OFFER_FINDER_HEADFIRST_MODE:-public}
+      LOG_LEVEL: ${OFFER_FINDER_LOG_LEVEL:-info}
+    networks:
+      - kingkontext-nl-internal
+    restart: unless-stopped
+
+  # Possibilities Discovery Worker (generates search ideas from assignments)
+  possibilities-discovery:
+    image: ${REGISTRY_BASE_URL}kingkontext-nl-possibilities-discovery:${POSSIBILITIES_DISCOVERY_IMAGE_TAG:-latest}
+    # build:
+    #   context: ${APP_CODE_PATH}
+    #   dockerfile: packages/possibilities-discovery/Dockerfile
+    container_name: kingkontext-nl-possibilities-discovery
+    depends_on:
+      cms:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      ASSIGNMENTS_DIR: /opt/app/markdown/assignments
+      NODE_ENV: production
+      STRAPI_API_TOKEN: ${STRAPI_API_TOKEN}
+      STRAPI_URL: http://cms:1337
+      MODE: ${POSSIBILITIES_DISCOVERY_MODE:-daemon}
+      POLL_INTERVAL_MS: ${POSSIBILITIES_DISCOVERY_POLL_INTERVAL_MS:-600000}
+      PROVIDER: ${POSSIBILITIES_DISCOVERY_PROVIDER:-openai}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_MODEL: ${POSSIBILITIES_DISCOVERY_OPENAI_MODEL:-gpt-4o-mini}
+      TEMPERATURE: ${POSSIBILITIES_DISCOVERY_TEMPERATURE:-0.7}
+      MAX_TOKENS: ${POSSIBILITIES_DISCOVERY_MAX_TOKENS:-1000}
+      HTTP_TIMEOUT_MS: ${POSSIBILITIES_DISCOVERY_HTTP_TIMEOUT_MS:-30000}
+      LOG_LEVEL: ${POSSIBILITIES_DISCOVERY_LOG_LEVEL:-info}
+    networks:
+      - kingkontext-nl-internal
+    restart: unless-stopped
+    volumes:
+      - ${APP_CODE_PATH}/markdown:/opt/app/markdown:ro
+
   # Next.js Web Application
   web:
     image: ${REGISTRY_BASE_URL}kingkontext-nl-web:latest

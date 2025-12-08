@@ -15,7 +15,12 @@ Traefik (proxy network)
        ↓
 PostgreSQL (internal network)
        ↑
-CV Generator Worker (polls Strapi, generates CVs)
+Workers (internal network):
+  ├── CV Generator Worker (polls Strapi, generates CVs)
+  ├── Offer Processor Worker (enriches offers)
+  ├── PDF Export Worker (generates PDFs)
+  ├── Offer Finder Worker (crawls external providers)
+  └── Possibilities Discovery Worker (generates search ideas)
        ↑
 Apache Tika (document text extraction)
 ```
@@ -24,6 +29,10 @@ Apache Tika (document text extraction)
 - **web** - Next.js 15 app with interactive CV timeline and offer management
 - **cms** - Strapi v5 headless CMS for content management
 - **cv-gen** - TypeScript worker that generates tailored CVs using LLM
+- **offer-processor** - Worker that enriches job offers and processes them
+- **pdf-export** - Worker that generates PDF versions of CVs
+- **offer-finder** - Daemon that crawls external providers for job offers
+- **possibilities-discovery** - Worker that generates search ideas from assignments
 - **postgres** - PostgreSQL 16 database
 - **tika** - Apache Tika for document text extraction
 
@@ -154,6 +163,10 @@ docker compose logs -f
 docker compose logs -f web
 docker compose logs -f cms
 docker compose logs -f cv-gen
+docker compose logs -f offer-processor
+docker compose logs -f pdf-export
+docker compose logs -f offer-finder
+docker compose logs -f possibilities-discovery
 
 # Restart a service
 docker compose restart web
