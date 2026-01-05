@@ -1,0 +1,149 @@
+services:
+  cms:
+    container_name: sippar-theresai-cms
+    depends_on:
+      - theresaidb
+    env_file:
+      - .env
+    environment:
+      DATABASE_CLIENT: postgres
+      DATABASE_HOST: ${POSTGRES_HOST}
+      DATABASE_NAME: ${POSTGRES_DB}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+      DATABASE_PORT: ${POSTGRES_PORT}
+      DATABASE_USERNAME: ${POSTGRES_USER}
+    image: ${THERESAI_CMS_IMAGE}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.middlewares.theresai-ops-headers.headers.stsSeconds=31536000"
+      - "traefik.http.middlewares.theresai-ops-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.theresai-ops-http.entrypoints=web"
+      - "traefik.http.routers.theresai-ops-http.middlewares=theresai-ops-https-redirect"
+      - "traefik.http.routers.theresai-ops-http.rule=Host(`operations.theres.ai`)"
+      - "traefik.http.routers.theresai-ops-http.service=theresai-ops-svc"
+      - "traefik.http.routers.theresai-ops.entrypoints=websecure"
+      - "traefik.http.routers.theresai-ops.middlewares=theresai-ops-headers@docker"
+      - "traefik.http.routers.theresai-ops.rule=Host(`operations.theres.ai`)"
+      - "traefik.http.routers.theresai-ops.service=theresai-ops-svc"
+      - "traefik.http.routers.theresai-ops.tls.certresolver=lehttp"
+      - "traefik.http.routers.theresai-ops.tls=true"
+      - "traefik.http.services.theresai-ops-svc.loadbalancer.server.port=1337"
+    networks:
+      - proxy
+      - theresai
+    restart: unless-stopped
+    volumes:
+      - ${PATH_DATA}/cms/public/uploads:/opt/app/public/uploads
+
+  mongodb:
+    container_name: sippar-theresai-mongodb
+    env_file:
+      - .env
+    environment:
+      MONGO_INITDB_DATABASE: ${MONGO_DATABASE}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+    image: mongo
+    networks:
+      - theresai
+    restart: always
+    volumes:
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - ${PATH_DATA}/mongo-theresai/db:/data/db
+
+  mongo-express:
+    container_name: sippar-theresai-mongo-express
+    depends_on:
+      - mongodb
+    env_file:
+      - .env
+    environment:
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      ME_CONFIG_MONGODB_SERVER: mongodb
+      VCAP_APP_PORT: ${MONGO_EXPRESS_PORT}
+    image: mongo-express
+    networks:
+      - theresai
+    restart: unless-stopped
+
+  theresai:
+    container_name: sippar-theresai
+    env_file:
+      - .env
+    environment:
+      FUENTASTIC: ${NEXT_PUBLIC_ADMIN_API_URL}
+    image: ${THERESAI_IMAGE}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.middlewares.theresai-headers.headers.stsSeconds=31536000"
+      - "traefik.http.middlewares.theresai-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.theresai-http.entrypoints=web"
+      - "traefik.http.routers.theresai-http.middlewares=theresai-https-redirect"
+      - "traefik.http.routers.theresai-http.rule=Host(`theres.ai`,`www.theres.ai`)"
+      - "traefik.http.routers.theresai-http.service=theresai-svc"
+      - "traefik.http.routers.theresai.entrypoints=websecure"
+      - "traefik.http.routers.theresai.middlewares=theresai-headers@docker"
+      - "traefik.http.routers.theresai.rule=Host(`theres.ai`,`www.theres.ai`)"
+      - "traefik.http.routers.theresai.service=theresai-svc"
+      - "traefik.http.routers.theresai.tls.certresolver=lehttp"
+      - "traefik.http.routers.theresai.tls=true"
+      - "traefik.http.services.theresai-svc.loadbalancer.server.port=3000"
+    networks:
+      - proxy
+      - theresai
+    restart: unless-stopped
+
+  theresai-generator:
+    container_name: sippar-theresai-generator
+    env_file:
+      - .env
+    environment:
+      PYTHONUNBUFFERED: "1"
+    image: ${THERESAI_GENERATOR_IMAGE}
+    networks:
+      - theresai
+    restart: unless-stopped
+    volumes:
+      - ${PATH_DATA}/theresai_generator:/app
+
+  theresai-illustrator-api:
+    container_name: sippar-theresai-illustrator-api
+    env_file:
+      - .env
+    environment:
+      PYTHONUNBUFFERED: "1"
+    image: ${THERESAI_ILLUSTRATOR_IMAGE}
+    networks:
+      - theresai
+    restart: unless-stopped
+    volumes:
+      - ${PATH_DATA}/theresai_illustrator_api:/app
+
+  theresaidb:
+    container_name: sippar-theresai-db
+    env_file:
+      - .env
+    environment:
+      PGDATA: /var/lib/postgresql/data/theresaidb
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER}
+    healthcheck:
+      interval: 10s
+      retries: 5
+      test: ['CMD-SHELL', 'pg_isready']
+      timeout: 5s
+    image: postgres:15.2-alpine
+    networks:
+      - theresai
+    restart: always
+    volumes:
+      - ${PATH_DATA}/postgresql-theresai/data:/var/lib/postgresql/data:Z
+      - ${PATH_DATA}/postgresql-theresai/init:/docker-entrypoint-initdb.d:z
+
+networks:
+  proxy:
+    external: true
+  theresai:
+    driver: bridge
