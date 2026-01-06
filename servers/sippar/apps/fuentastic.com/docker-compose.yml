@@ -1,0 +1,28 @@
+services:
+  fuentastic:
+    container_name: sippar-fuentastic
+    env_file:
+      - .env
+    image: ${FUENTASTIC_IMAGE}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.middlewares.fuentastic-headers.headers.stsSeconds=31536000"
+      - "traefik.http.middlewares.fuentastic-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.fuentastic-http.entrypoints=web"
+      - "traefik.http.routers.fuentastic-http.middlewares=fuentastic-https-redirect"
+      - "traefik.http.routers.fuentastic-http.rule=Host(`fuentastic.com`) || Host(`www.fuentastic.com`)"
+      - "traefik.http.routers.fuentastic-http.service=fuentastic-svc"
+      - "traefik.http.routers.fuentastic.entrypoints=websecure"
+      - "traefik.http.routers.fuentastic.middlewares=fuentastic-headers@docker"
+      - "traefik.http.routers.fuentastic.rule=Host(`fuentastic.com`) || Host(`www.fuentastic.com`)"
+      - "traefik.http.routers.fuentastic.service=fuentastic-svc"
+      - "traefik.http.routers.fuentastic.tls.certresolver=lehttp"
+      - "traefik.http.routers.fuentastic.tls=true"
+      - "traefik.http.services.fuentastic-svc.loadbalancer.server.port=80"
+    networks:
+      - proxy
+    restart: unless-stopped
+
+networks:
+  proxy:
+    external: true
