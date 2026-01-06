@@ -4,3 +4,5 @@ templates/server/.env
 .env
 
 acme.json
+servers/sippar/apps/theres.ai/data/mongo-theresai/db
+servers/sippar/apps/theres.ai/data
