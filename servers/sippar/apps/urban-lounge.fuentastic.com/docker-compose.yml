@@ -1,0 +1,28 @@
+services:
+  urban-lounge:
+    container_name: sippar-urban-lounge
+    env_file:
+      - .env
+    image: ${URBAN_LOUNGE_IMAGE:-fuentastic/urban-lounge-web:latest}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.middlewares.urban-lounge-headers.headers.stsSeconds=31536000"
+      - "traefik.http.middlewares.urban-lounge-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.urban-lounge-http.entrypoints=web"
+      - "traefik.http.routers.urban-lounge-http.middlewares=urban-lounge-https-redirect"
+      - "traefik.http.routers.urban-lounge-http.rule=Host(`urban-lounge.fuentastic.com`)"
+      - "traefik.http.routers.urban-lounge-http.service=urban-lounge-svc"
+      - "traefik.http.routers.urban-lounge.entrypoints=websecure"
+      - "traefik.http.routers.urban-lounge.middlewares=urban-lounge-headers@docker"
+      - "traefik.http.routers.urban-lounge.rule=Host(`urban-lounge.fuentastic.com`)"
+      - "traefik.http.routers.urban-lounge.service=urban-lounge-svc"
+      - "traefik.http.routers.urban-lounge.tls.certresolver=lehttp"
+      - "traefik.http.routers.urban-lounge.tls=true"
+      - "traefik.http.services.urban-lounge-svc.loadbalancer.server.port=3000"
+    networks:
+      - proxy
+    restart: unless-stopped
+
+networks:
+  proxy:
+    external: true
