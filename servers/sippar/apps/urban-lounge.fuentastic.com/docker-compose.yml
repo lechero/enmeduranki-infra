@@ -27,6 +27,13 @@ services:
     container_name: sippar-urban-lounge-preview
     env_file:
       - .env.preview
+    environment:
+      - NEXT_PUBLIC_PREVIEW_FEEDBACK_ENABLED=${NEXT_PUBLIC_PREVIEW_FEEDBACK_ENABLED:-}
+      - NEXT_PUBLIC_PR_NUMBER=${NEXT_PUBLIC_PR_NUMBER:-}
+      - NEXT_PUBLIC_BRANCH=${NEXT_PUBLIC_BRANCH:-}
+      - NEXT_PUBLIC_COMMIT_SHA=${NEXT_PUBLIC_COMMIT_SHA:-}
+      - NEXT_PUBLIC_DEPLOYMENT_URL=${NEXT_PUBLIC_DEPLOYMENT_URL:-}
+      - NEXT_PUBLIC_ENVIRONMENT=${NEXT_PUBLIC_ENVIRONMENT:-}
     image: ${URBAN_LOUNGE_PREVIEW_IMAGE:-fuentastic/urban-lounge-preview-web:latest}
     labels:
       - "traefik.enable=true"
