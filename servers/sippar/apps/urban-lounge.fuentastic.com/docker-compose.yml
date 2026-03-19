@@ -54,6 +54,40 @@ services:
       - proxy
     restart: unless-stopped
 
+  urban-lounge-storage:
+    command: >
+      server
+      -dir=/data
+      -s3
+      -ip=urban-lounge-storage
+      -ip.bind=0.0.0.0
+      -s3.port=8333
+      -volume.max=0
+      -master.volumeSizeLimitMB=1024
+      -master.defaultReplication=000
+    container_name: sippar-urban-lounge-storage
+    environment:
+      - AWS_ACCESS_KEY_ID=${SEAWEEDFS_ACCESS_KEY}
+      - AWS_SECRET_ACCESS_KEY=${SEAWEEDFS_SECRET_KEY}
+    image: chrislusf/seaweedfs:4.17
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.middlewares.urban-lounge-storage-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.urban-lounge-storage-http.entrypoints=web"
+      - "traefik.http.routers.urban-lounge-storage-http.middlewares=urban-lounge-storage-redirect"
+      - "traefik.http.routers.urban-lounge-storage-http.rule=Host(`s3-urban-lounge.fuentastic.com`)"
+      - "traefik.http.routers.urban-lounge-storage.entrypoints=websecure"
+      - "traefik.http.routers.urban-lounge-storage.rule=Host(`s3-urban-lounge.fuentastic.com`)"
+      - "traefik.http.routers.urban-lounge-storage.service=urban-lounge-storage-svc"
+      - "traefik.http.routers.urban-lounge-storage.tls.certresolver=lehttp"
+      - "traefik.http.routers.urban-lounge-storage.tls=true"
+      - "traefik.http.services.urban-lounge-storage-svc.loadbalancer.server.port=8333"
+    networks:
+      - proxy
+    restart: unless-stopped
+    volumes:
+      - ./state/seaweedfs:/data
+
 networks:
   proxy:
     external: true
