@@ -1,0 +1,89 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: sippar-lounge-b1zero-pl-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-urban_lounge}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER:-urban_lounge}
+    healthcheck:
+      interval: 10s
+      retries: 5
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-urban_lounge}"]
+      timeout: 5s
+    networks:
+      - lounge-b1zero-pl-internal
+    restart: unless-stopped
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  lounge-b1zero-pl:
+    container_name: sippar-lounge-b1zero-pl
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env
+    image: ${URBAN_LOUNGE_IMAGE:-fuentastic/urban-lounge-web:latest}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.middlewares.lounge-b1zero-pl-headers.headers.stsSeconds=31536000"
+      - "traefik.http.middlewares.lounge-b1zero-pl-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.lounge-b1zero-pl-http.entrypoints=web"
+      - "traefik.http.routers.lounge-b1zero-pl-http.middlewares=lounge-b1zero-pl-https-redirect"
+      - "traefik.http.routers.lounge-b1zero-pl-http.rule=Host(`lounge.b1zero.pl`)"
+      - "traefik.http.routers.lounge-b1zero-pl-http.service=lounge-b1zero-pl-svc"
+      - "traefik.http.routers.lounge-b1zero-pl.entrypoints=websecure"
+      - "traefik.http.routers.lounge-b1zero-pl.middlewares=lounge-b1zero-pl-headers@docker"
+      - "traefik.http.routers.lounge-b1zero-pl.rule=Host(`lounge.b1zero.pl`)"
+      - "traefik.http.routers.lounge-b1zero-pl.service=lounge-b1zero-pl-svc"
+      - "traefik.http.routers.lounge-b1zero-pl.tls.certresolver=lehttp"
+      - "traefik.http.routers.lounge-b1zero-pl.tls=true"
+      - "traefik.http.services.lounge-b1zero-pl-svc.loadbalancer.server.port=3000"
+    networks:
+      - lounge-b1zero-pl-internal
+      - proxy
+    restart: unless-stopped
+
+  lounge-b1zero-pl-storage:
+    command: >
+      server
+      -dir=/data
+      -s3
+      -ip=lounge-b1zero-pl-storage
+      -ip.bind=0.0.0.0
+      -s3.port=8333
+      -volume.max=0
+      -master.volumeSizeLimitMB=1024
+      -master.defaultReplication=000
+    container_name: sippar-lounge-b1zero-pl-storage
+    environment:
+      - AWS_ACCESS_KEY_ID=${SEAWEEDFS_ACCESS_KEY}
+      - AWS_SECRET_ACCESS_KEY=${SEAWEEDFS_SECRET_KEY}
+    image: chrislusf/seaweedfs:4.17
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.middlewares.lounge-b1zero-pl-storage-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.lounge-b1zero-pl-storage-http.entrypoints=web"
+      - "traefik.http.routers.lounge-b1zero-pl-storage-http.middlewares=lounge-b1zero-pl-storage-redirect"
+      - "traefik.http.routers.lounge-b1zero-pl-storage-http.rule=Host(`s3-lounge.b1zero.pl`)"
+      - "traefik.http.routers.lounge-b1zero-pl-storage.entrypoints=websecure"
+      - "traefik.http.routers.lounge-b1zero-pl-storage.rule=Host(`s3-lounge.b1zero.pl`)"
+      - "traefik.http.routers.lounge-b1zero-pl-storage.service=lounge-b1zero-pl-storage-svc"
+      - "traefik.http.routers.lounge-b1zero-pl-storage.tls.certresolver=lehttp"
+      - "traefik.http.routers.lounge-b1zero-pl-storage.tls=true"
+      - "traefik.http.services.lounge-b1zero-pl-storage-svc.loadbalancer.server.port=8333"
+    networks:
+      - proxy
+    restart: unless-stopped
+    volumes:
+      - ./state/seaweedfs:/data
+
+networks:
+  lounge-b1zero-pl-internal:
+    internal: true
+  proxy:
+    external: true
+
+volumes:
+  postgres-data:
