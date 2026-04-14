@@ -114,8 +114,9 @@ services:
       - ./state/seaweedfs:/data
 
 networks:
-  urban-lounge-internal:
-    internal: true
+  urban-lounge-internal: {}
+  #urban-lounge-internal:
+    #internal: true
   proxy:
     external: true
 
