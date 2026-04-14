@@ -73,6 +73,7 @@ services:
       - "traefik.http.routers.urban-lounge-preview.tls=true"
       - "traefik.http.services.urban-lounge-preview-svc.loadbalancer.server.port=3000"
     networks:
+      - urban-lounge-internal
       - proxy
     restart: unless-stopped
 
