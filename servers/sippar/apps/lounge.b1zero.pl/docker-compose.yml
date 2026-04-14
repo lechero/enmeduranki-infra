@@ -16,6 +16,8 @@ services:
     restart: unless-stopped
     volumes:
       - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:25432:5432"
 
   lounge-b1zero-pl:
     container_name: sippar-lounge-b1zero-pl
