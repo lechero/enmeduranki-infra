@@ -1,6 +1,7 @@
 services:
   postgres:
     container_name: sippar-urban-lounge-postgres
+    image: postgres:16-alpine
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-urban_lounge}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -10,12 +11,13 @@ services:
       retries: 5
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-urban_lounge}"]
       timeout: 5s
-    image: postgres:16-alpine
     networks:
       - urban-lounge-internal
     restart: unless-stopped
     volumes:
       - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:35432:5432"
 
   urban-lounge:
     container_name: sippar-urban-lounge
