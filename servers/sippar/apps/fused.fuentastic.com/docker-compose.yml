@@ -1,0 +1,82 @@
+services:
+  fused-postgres:
+    container_name: sippar-fused-postgres
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-fused}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-fused}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-fused}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - fused-internal
+    restart: unless-stopped
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  fused-valkey:
+    container_name: sippar-fused-valkey
+    image: valkey/valkey:8-alpine
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - fused-internal
+    restart: unless-stopped
+    volumes:
+      - valkey-data:/data
+
+  fused-searxng:
+    container_name: sippar-fused-searxng
+    image: searxng/searxng:latest
+    environment:
+      - SEARXNG_BASE_URL=https://fused.fuentastic.com/search
+    networks:
+      - fused-internal
+    restart: unless-stopped
+    volumes:
+      - ./searxng:/etc/searxng:rw
+
+  fused-web:
+    container_name: sippar-fused-web
+    depends_on:
+      fused-postgres:
+        condition: service_healthy
+      fused-valkey:
+        condition: service_healthy
+    env_file:
+      - .env
+    image: ${FUSED_IMAGE:-fuentastic/fused-web:latest}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.middlewares.fused-headers.headers.stsSeconds=31536000"
+      - "traefik.http.middlewares.fused-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.fused-http.entrypoints=web"
+      - "traefik.http.routers.fused-http.middlewares=fused-https-redirect"
+      - "traefik.http.routers.fused-http.rule=Host(`fused.fuentastic.com`)"
+      - "traefik.http.routers.fused-http.service=fused-svc"
+      - "traefik.http.routers.fused.entrypoints=websecure"
+      - "traefik.http.routers.fused.middlewares=fused-headers@docker"
+      - "traefik.http.routers.fused.rule=Host(`fused.fuentastic.com`)"
+      - "traefik.http.routers.fused.service=fused-svc"
+      - "traefik.http.routers.fused.tls.certresolver=lehttp"
+      - "traefik.http.routers.fused.tls=true"
+      - "traefik.http.services.fused-svc.loadbalancer.server.port=3000"
+    networks:
+      - fused-internal
+      - proxy
+    restart: unless-stopped
+
+networks:
+  fused-internal: {}
+  proxy:
+    external: true
+
+volumes:
+  postgres-data:
+  valkey-data:
