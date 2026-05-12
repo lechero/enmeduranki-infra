@@ -1,4 +1,7 @@
-use_default_settings: true
+use_default_settings:
+  engines:
+    remove:
+      - wikidata
 
 general:
   debug: false
@@ -24,7 +27,7 @@ server:
   http_protocol_version: "1.0"
   method: "GET"
 
-redis:
+valkey:
   url: redis://fused-valkey:6379/0
 
 outgoing:
