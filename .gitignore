@@ -9,4 +9,3 @@ servers/sippar/apps/theres.ai/data
 servers/sippar/apps/urban-lounge.fuentastic.com/state/seaweedfs
 servers/sippar/apps/urban-lounge.fuentastic.com/.env.preview
 servers/sippar/apps/lounge.b1zero.pl/state/seaweedfs
-servers/sippar/apps/fused.fuentastic.com/searxng/settings.yml
