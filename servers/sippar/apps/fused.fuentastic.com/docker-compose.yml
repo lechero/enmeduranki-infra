@@ -74,6 +74,22 @@ services:
       - proxy
     restart: unless-stopped
 
+  fused-worker:
+    container_name: sippar-fused-worker
+    depends_on:
+      fused-postgres:
+        condition: service_healthy
+      fused-valkey:
+        condition: service_healthy
+      fused-searxng:
+        condition: service_started
+    env_file:
+      - .env
+    image: ${FUSED_WORKER_IMAGE:-fuentastic/fused-worker:latest}
+    networks:
+      - fused-internal
+    restart: unless-stopped
+
 networks:
   fused-internal: {}
   proxy:
