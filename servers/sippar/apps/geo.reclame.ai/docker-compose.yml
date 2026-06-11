@@ -1,0 +1,31 @@
+services:
+  georeclameai-web:
+    container_name: sippar-georeclameai-web
+    env_file:
+      - .env
+    image: ${FUSED_IMAGE:-fuentastic/georeclameai-web:latest}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.middlewares.georeclameai-headers.headers.stsSeconds=31536000"
+      - "traefik.http.middlewares.georeclameai-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.georeclameai-http.entrypoints=web"
+      - "traefik.http.routers.georeclameai-http.middlewares=georeclameai-https-redirect"
+      - "traefik.http.routers.georeclameai-http.rule=Host(`geo.reclame.ai`)"
+      - "traefik.http.routers.georeclameai-http.service=georeclameai-svc"
+      - "traefik.http.routers.georeclameai.entrypoints=websecure"
+      - "traefik.http.routers.georeclameai.middlewares=georeclameai-headers@docker"
+      - "traefik.http.routers.georeclameai.rule=Host(`geo.reclame.ai`)"
+      - "traefik.http.routers.georeclameai.service=georeclameai-svc"
+      - "traefik.http.routers.georeclameai.tls.certresolver=lehttp"
+      - "traefik.http.routers.georeclameai.tls=true"
+      - "traefik.http.services.georeclameai-svc.loadbalancer.server.port=3000"
+    networks:
+      - georeclameai-internal
+      - proxy
+    restart: unless-stopped
+
+networks:
+  georeclameai-internal: {}
+  proxy:
+    external: true
+
