@@ -77,7 +77,7 @@ services:
   fused-worker:
     #container_name: sippar-fused-worker
     deploy:
-      replicas: 9 
+      replicas: 5 
     depends_on:
       fused-postgres:
         condition: service_healthy
